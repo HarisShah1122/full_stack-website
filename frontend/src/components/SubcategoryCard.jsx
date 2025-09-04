@@ -1,17 +1,19 @@
 import React from 'react';
 
 const SubcategoryCard = ({ title, img, description }) => (
-  <div className="text-center transition-transform duration-300 hover:scale-105">
-    <div className="bg-transparent shadow-sm overflow-hidden">
+  <div className="text-center group cursor-pointer">
+    <div className="relative overflow-hidden rounded-lg shadow-md">
       <img 
         src={img} 
         alt={title} 
-        className="w-40 h-40 sm:w-48 sm:h-48 object-contain mx-auto"
+        className="w-full h-80 object-cover transform group-hover:scale-110 transition duration-500 ease-in-out"
         loading="lazy"
       />
+      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-40 text-white p-3 opacity-0 group-hover:opacity-100 transition duration-500">
+        <h4 className="font-semibold text-md">{title}</h4>
+        <p className="text-xs">{description}</p>
+      </div>
     </div>
-    <h4 className="font-semibold text-gray-800 text-sm sm:text-base mt-2">{title}</h4>
-    <p className="text-gray-500 text-xs sm:text-sm">{description}</p>
   </div>
 );
 
