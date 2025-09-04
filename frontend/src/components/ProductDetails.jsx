@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useContext } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { FaShoppingCart, FaLock } from 'react-icons/fa';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import { loadScript } from '@paypal/paypal-js';
+import AuthContext from '../context/AuthContext';
 
 const products = {
   "shalwar-kameez": {
@@ -112,12 +114,83 @@ const products = {
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user, token } = useContext(AuthContext);
   const product = products[id] || products["shalwar-kameez"];
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
+  const [paypalError, setPaypalError] = useState(null);
 
   const handleQuantityChange = (change) => {
     setQuantity((prev) => Math.max(1, prev + change));
+  };
+
+  const handleAddToCart = async () => {
+    if (!user || !token) {
+      navigate('/signin');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8081/api/cart/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          productId: id,
+          quantity,
+          color: selectedColor,
+          price: product.newPrice,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert('Item added to cart successfully!');
+      } else {
+        alert(data.error || 'Failed to add item to cart');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Server error. Please try again later.');
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (!user || !token) {
+      navigate('/signin');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8081/api/paypal/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items: [{
+            productId: id,
+            quantity,
+            color: selectedColor,
+            price: product.newPrice / 100, // Convert PKR to USD (approx)
+          }],
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        window.location.href = `https://www.paypal.com/checkoutnow?orderID=${data.orderId}`;
+      } else {
+        setPaypalError(data.error || 'Failed to create PayPal order');
+      }
+    } catch (error) {
+      console.error('Error creating PayPal order:', error);
+      setPaypalError('Server error. Please try again later.');
+    }
   };
 
   return (
@@ -191,13 +264,22 @@ const ProductDetails = () => {
             </div>
           </div>
           <div className="flex gap-4">
-            <button className="flex-1 bg-blue-600 text-white font-medium py-3 rounded hover:bg-blue-800 transition flex items-center justify-center">
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 bg-blue-600 text-white font-medium py-3 rounded hover:bg-blue-800 transition flex items-center justify-center"
+            >
               <FaShoppingCart className="mr-2" /> Add to Cart
             </button>
-            <button className="flex-1 bg-green-600 text-white font-medium py-3 rounded hover:bg-green-800 transition">
+            <button
+              onClick={handleBuyNow}
+              className="flex-1 bg-green-600 text-white font-medium py-3 rounded hover:bg-green-800 transition"
+            >
               Buy Now
             </button>
           </div>
+          {paypalError && (
+            <p className="text-red-600 mt-2">{paypalError}</p>
+          )}
           <div className="border-t pt-4 mt-4">
             <p className="text-gray-600 flex items-center gap-2">
               <FaLock className="text-green-600" /> Secure Checkout

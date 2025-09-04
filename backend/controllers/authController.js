@@ -1,11 +1,14 @@
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
 const passport = require('passport');
-const User = require('../models/Users'); 
-const { validateSignIn, validateSignUp } = require('../helpers/validation'); 
+const jwt = require('jsonwebtoken'); // Add jsonwebtoken
+const User = require('../models/Users');
+const { validateSignIn, validateSignUp } = require('../helpers/validation');
 
 module.exports.controller = (app) => {
-  // Login
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
   app.post('/login', validateSignIn, async (req, res) => {
     try {
       const user = await User.findOne({ where: { email: req.body.email } });
@@ -19,51 +22,25 @@ module.exports.controller = (app) => {
       if (!isMatch) {
         return res.status(401).json({ error: 'Invalid credentials.' });
       }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET || 'your-secret-key', // Use .env for security
+        { expiresIn: '1h' }
+      );
+
+      // Keep session for compatibility
       req.session.username = req.body.email;
-      return res.status(200).json({ message: 'User successfully logged in.' });
+
+      return res.status(200).json({
+        message: 'User successfully logged in.',
+        token, // Return JWT token
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: 'Login failed: ' + error.message });
     }
-  });
-
-  // Signup
-  app.post('/signup', validateSignUp, async (req, res) => {
-    try {
-      const existingUser = await User.findOne({ where: { email: req.body.email } });
-      if (existingUser) {
-        return res.status(400).json({ error: 'Email already exists.' });
-      }
-      const hashedPassword = await bcrypt.hash(req.body.password, 10);
-      await User.create({
-        firstname: req.body.firstname,
-        lastname: req.body.lastname,
-        email: req.body.email,
-        password: hashedPassword,
-      });
-      return res.status(201).json({ message: 'User registered successfully.' });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'User registration failed: ' + error.message });
-    }
-  });
-
-  // Check Authentication
-  app.get('/check-auth', (req, res) => {
-    if (req.session && req.session.username) {
-      return res.status(200).json({ message: 'Authenticated', email: req.session.username });
-    }
-    return res.status(401).json({ error: 'Not authenticated' });
-  });
-
-  // Logout
-  app.get('/logout', (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ error: 'Logout failed: ' + err.message });
-      }
-      return res.status(200).json({ message: 'Logged out successfully.' });
-    });
   });
 
   /*
