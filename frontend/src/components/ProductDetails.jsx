@@ -6,7 +6,6 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { loadScript } from '@paypal/paypal-js';
 import AuthContext from '../context/AuthContext';
 
 const products = {
@@ -119,7 +118,8 @@ const ProductDetails = () => {
   const product = products[id] || products["shalwar-kameez"];
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
-  const [paypalError, setPaypalError] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("HBL");
+  const [paymentError, setPaymentError] = useState(null);
 
   const handleQuantityChange = (change) => {
     setQuantity((prev) => Math.max(1, prev + change));
@@ -127,16 +127,16 @@ const ProductDetails = () => {
 
   const handleAddToCart = async () => {
     if (!user || !token) {
-      navigate('/signin');
+      navigate("/signin");
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:8081/api/cart/add', {
-        method: 'POST',
+      const response = await fetch("http://localhost:8081/api/cart/add", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           productId: id,
@@ -148,48 +148,56 @@ const ProductDetails = () => {
 
       const data = await response.json();
       if (response.ok) {
-        alert('Item added to cart successfully!');
+        alert("Item added to cart successfully!");
       } else {
-        alert(data.error || 'Failed to add item to cart');
+        alert(data.error || "Failed to add item to cart");
       }
     } catch (error) {
-      console.error('Error adding to cart:', error);
-      alert('Server error. Please try again later.');
+      console.error("Error adding to cart:", error);
+      alert("Server error. Please try again later.");
     }
   };
 
   const handleBuyNow = async () => {
     if (!user || !token) {
-      navigate('/signin');
+      navigate("/signin");
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:8081/api/paypal/create-order', {
-        method: 'POST',
+      const response = await fetch("http://localhost:8081/api/payment/create-order", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          items: [{
-            productId: id,
-            quantity,
-            color: selectedColor,
-            price: product.newPrice / 100, // Convert PKR to USD (approx)
-          }],
+          items: [
+            {
+              productId: id,
+              quantity,
+              color: selectedColor,
+              price: product.newPrice,
+            },
+          ],
+          paymentMethod,
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        window.location.href = `https://www.paypal.com/checkoutnow?orderID=${data.orderId}`;
+        if (paymentMethod === "COD") {
+          alert("Cash on Delivery order placed successfully!");
+          navigate(`/success?orderID=${data.orderId}&paymentMethod=${paymentMethod}`);
+        } else {
+          window.location.href = data.paymentUrl;
+        }
       } else {
-        setPaypalError(data.error || 'Failed to create PayPal order');
+        setPaymentError(data.error || "Failed to create order");
       }
     } catch (error) {
-      console.error('Error creating PayPal order:', error);
-      setPaypalError('Server error. Please try again later.');
+      console.error("Error creating order:", error);
+      setPaymentError("Server error. Please try again later.");
     }
   };
 
@@ -235,9 +243,7 @@ const ProductDetails = () => {
                 <button
                   key={color}
                   className={`w-8 h-8 rounded-full border-2 ${
-                    selectedColor === color
-                      ? "border-blue-600"
-                      : "border-gray-300"
+                    selectedColor === color ? "border-blue-600" : "border-gray-300"
                   }`}
                   style={{ backgroundColor: color.toLowerCase() }}
                   onClick={() => setSelectedColor(color)}
@@ -263,6 +269,20 @@ const ProductDetails = () => {
               </button>
             </div>
           </div>
+          <div>
+            <h3 className="text-gray-800 font-semibold mb-2">Payment Method</h3>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full p-2 border rounded"
+            >
+              <option value="HBL">HBL (Credit/Debit Card)</option>
+              <option value="JazzCash">JazzCash (Card/Mobile Wallet)</option>
+              <option value="UBL">UBL (Credit/Debit Card)</option>
+              <option value="EasyPay">EasyPay (Card/Mobile Wallet)</option>
+              <option value="COD">Cash on Delivery</option>
+            </select>
+          </div>
           <div className="flex gap-4">
             <button
               onClick={handleAddToCart}
@@ -277,9 +297,7 @@ const ProductDetails = () => {
               Buy Now
             </button>
           </div>
-          {paypalError && (
-            <p className="text-red-600 mt-2">{paypalError}</p>
-          )}
+          {paymentError && <p className="text-red-600 mt-2">{paymentError}</p>}
           <div className="border-t pt-4 mt-4">
             <p className="text-gray-600 flex items-center gap-2">
               <FaLock className="text-green-600" /> Secure Checkout

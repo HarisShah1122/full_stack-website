@@ -9,16 +9,18 @@ const Success = () => {
 
   useEffect(() => {
     const orderId = searchParams.get('orderID');
+    const paymentMethod = searchParams.get('paymentMethod') || 'HBL'; 
+
     if (orderId && token) {
       const captureOrder = async () => {
         try {
-          const response = await fetch('http://localhost:8081/api/paypal/capture-order', {
+          const response = await fetch('http://localhost:8081/api/payment/capture-order', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({ orderId }),
+            body: JSON.stringify({ orderId, paymentMethod }),
           });
           const data = await response.json();
           if (response.ok) {

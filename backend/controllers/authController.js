@@ -1,7 +1,7 @@
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
 const passport = require('passport');
-const jwt = require('jsonwebtoken'); // Add jsonwebtoken
+const jwt = require('jsonwebtoken'); 
 const User = require('../models/Users');
 const { validateSignIn, validateSignUp } = require('../helpers/validation');
 
@@ -26,7 +26,7 @@ module.exports.controller = (app) => {
       // Generate JWT token
       const token = jwt.sign(
         { id: user.id, email: user.email },
-        process.env.JWT_SECRET || 'your-secret-key', // Use .env for security
+        process.env.JWT_SECRET || 'your-secret-key', 
         { expiresIn: '1h' }
       );
 
@@ -35,7 +35,7 @@ module.exports.controller = (app) => {
 
       return res.status(200).json({
         message: 'User successfully logged in.',
-        token, // Return JWT token
+        token, 
       });
     } catch (error) {
       console.error(error);
