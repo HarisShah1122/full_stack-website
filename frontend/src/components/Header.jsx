@@ -24,7 +24,7 @@ const Header = () => {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-4">
           <Link to="/">
-            <img src="/assets/logo.png" alt="Khkula Logo" className="h-12 sm:h-16" loading="lazy" />
+            <img src="/public/logo.png" alt="Khkula Logo" className="h-12 sm:h-16" loading="lazy" />
           </Link>
           <div className="flex-1 mx-4 hidden sm:block">
             <div className="relative max-w-md mx-auto">
