@@ -9,6 +9,8 @@ import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import Success from "./components/Success";
 import Cancel from "./components/Cancel";
+import TraditionalDress from "./components/TraditionalDress";
+import Cart from "./components/Cart";
 
 const App = () => {
   return (
@@ -22,11 +24,13 @@ const App = () => {
         <Route path="/shawls" element={<div>Shawls</div>} />
         <Route path="/bags" element={<div>Bags</div>} />
         <Route path="/unstitched" element={<Unstitched />} />
+        <Route path="/TraditionalDress" element={<TraditionalDress />} />
         <Route path="/mens-wear" element={<MensWear />} />
         <Route path="/success" element={<Success />} />
         <Route path="/cancel" element={<Cancel />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/cart" element={<Cart />} />
       </Routes>
     </>
   );

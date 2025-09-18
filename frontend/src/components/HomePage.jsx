@@ -238,7 +238,11 @@ const Home = () => {
       <footer className="bg-gray-100 px-6 py-10">
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-4 gap-8 text-center sm:text-left">
           <div>
+<<<<<<< HEAD
             <img src="/public/logo2.png" alt="logo" className="h-14 mx-auto sm:mx-0 mb-4" loading="lazy" />
+=======
+            <img src="/public/logo2.png" alt="Logo" className="h-14 mx-auto sm:mx-0 mb-4" loading="lazy" />
+>>>>>>> d8f4eb17f8f8696e5f0fa5d615cc725b58a1c61c
             <p className="font-semibold">Vital Collection PVT Ltd</p>
             <p className="mt-2 text-sm">Call Us: +92315-xxxx0983</p>
             <p className="text-sm">Email: khkula@gmail.com</p>
